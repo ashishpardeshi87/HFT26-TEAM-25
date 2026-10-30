@@ -1,0 +1,23 @@
+# Python
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# Node
+**/node_modules/
+**/dist/
+
+# Secrets / local env (never commit these)
+.env
+*.env
+!*.env.example
+serviceAccount.json
+*firebase-adminsdk*
+*.pem
+id_rsa*
+
+# Archives / OS / editor junk
+*.zip
+*.log
+.DS_Store
+Thumbs.db
