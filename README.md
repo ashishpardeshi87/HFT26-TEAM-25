@@ -9,6 +9,8 @@
 `HFT26-TEAM-25` · CBIT Hacktoberfest '26 · Track: **AI Security & Data Privacy**
 Problem Statement: **AI Shadow IT & Agentic Data Exfiltration Scanner**
 
+> **Development status:** Initial prototype foundation is active; validated feature integration is in progress on this branch.
+
 [Live Website](#) · [Demo Video](#) · [Architecture](#4-architecture) · [Quick Start](#8-local-setup)
 
 </div>
