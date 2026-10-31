@@ -11,6 +11,8 @@ Problem Statement: **AI Shadow IT & Agentic Data Exfiltration Scanner**
 
 > **Development status:** Initial prototype foundation is active; validated feature integration is in progress on this branch.
 
+[Project Status](./docs/PROJECT_STATUS.md) · [Security](./SECURITY.md) · [Contributing](./CONTRIBUTING.md)
+
 [Live Website](#) · [Demo Video](#) · [Architecture](#4-architecture) · [Quick Start](#8-local-setup)
 
 </div>
