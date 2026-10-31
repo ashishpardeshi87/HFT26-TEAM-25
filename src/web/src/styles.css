@@ -1,0 +1,27 @@
+:root { color-scheme: dark; font-family: Consolas, "Cascadia Code", monospace; background: #090a0b; color: #eceee7; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px), #090a0b; background-size: 42px 42px; }
+button, input { font: inherit; }
+main { width: min(900px, calc(100% - 32px)); margin: 0 auto; padding: 12vh 0 64px; }
+.hero { border-left: 4px solid #baff2a; padding-left: 24px; }
+.eyebrow, label { color: #9da095; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; }
+h1 { margin: 10px 0; font-family: "Arial Black", "Segoe UI", sans-serif; font-size: clamp(3rem, 9vw, 6.5rem); line-height: .88; letter-spacing: -.06em; }
+h1 span { color: #baff2a; }
+.lead { color: #9da095; }
+.status { display: inline-flex; gap: 9px; align-items: center; margin-top: 20px; padding: 8px 11px; border: 1px solid #373a3e; font-size: .75rem; text-transform: uppercase; }
+.status i { width: 8px; height: 8px; background: #ffb020; }
+.status.online i { background: #3ddc97; box-shadow: 0 0 14px #3ddc97; }
+.panel { margin-top: 56px; border: 1px solid #373a3e; background: #101113; box-shadow: 8px 8px 0 #000; }
+.panel header { padding: 12px 16px; border-bottom: 1px solid #373a3e; color: #baff2a; font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; }
+form { padding: 22px; }
+label { display: block; margin-bottom: 8px; }
+.row { display: flex; gap: 10px; }
+input { min-width: 0; flex: 1; padding: 12px; color: #eceee7; background: #090a0b; border: 1px solid #4b4e53; outline: none; }
+input:focus { border-color: #baff2a; }
+button { padding: 12px 16px; border: 1px solid #baff2a; background: #baff2a; color: #090a0b; font-weight: 700; text-transform: uppercase; cursor: pointer; box-shadow: 4px 4px 0 #000; }
+button:hover { transform: translate(-1px, -1px); }
+.result, .error { margin: 0; padding: 0 22px 20px; font-size: .8rem; }
+.result { color: #3ddc97; }
+.error { color: #ff6258; }
+.note { color: #686b65; margin-top: 24px; font-size: .7rem; }
+@media (max-width: 600px) { .row { flex-direction: column; } button { width: 100%; } }
