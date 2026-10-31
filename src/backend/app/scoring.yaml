@@ -1,0 +1,38 @@
+# Declarative threat-scoring rules. Weights live here, not in code, so the
+# explainable score is data a judge can inspect and we can ablate.
+# Every fired rule is recorded on the incident with the event_ids that triggered it.
+
+thresholds:
+  critical: 75
+  high: 50
+  medium: 25
+
+# destination approval
+provider:
+  unapproved: 20
+  unknown: 8
+  local_llm: 6
+
+# data-leak findings, by severity (we take the strongest few per incident)
+data_leak:
+  critical: 40
+  high: 26
+  medium: 14
+  low: 6
+  max_findings: 3
+
+# agent behaviour, by severity
+behaviour:
+  critical: 40
+  high: 26
+  medium: 14
+  low: 6
+
+# high-confidence confirmations (these dominate — they are near-ground-truth)
+confirmations:
+  canary_exfiltration: 60        # canary token appeared in an outbound payload
+  fingerprint_match: 45          # a secret read from a file reappeared in a payload
+
+# external corroboration from DarkGuard (capped)
+external_exposure_divisor: 5
+external_exposure_max: 15

@@ -1,0 +1,556 @@
+# SENTINEL APEX — AI Agent Security Policy (baseline)
+# Machine-readable source of truth. Human companion: APEX_FINAL_FLOW.md Appendix A.
+#
+# enforcement modes: allow | warn | deny | require_approval
+#   (allow may carry side-effects: audit, provenance, redact, correlate, lifecycle)
+# severity: critical | high | medium
+# floor: true  => baseline rule; operators may TIGHTEN, never remove
+# cis_controls: CIS Controls v8.1 family numbers
+# standards: external frameworks the rule aligns to
+
+policy_version: "1.0.0"
+standard: "SENTINEL APEX AI Agent Security Policy"
+updated: "2026-10-30"
+
+standards_catalog:
+  cis_v8: "CIS Critical Security Controls v8.1 (control framework; no AI-agent-specific CIS Benchmark exists)"
+  owasp_llm: "OWASP Top 10 for LLM Applications"
+  owasp_agentic: "OWASP Top 10 for Agentic Applications"
+  nist_ai_rmf: "NIST AI Risk Management Framework"
+  mitre_atlas: "MITRE ATLAS"
+
+enforcement_levels:
+  allow: "Complies with manifest and policy; proceeds."
+  warn: "Permitted but suspicious; proceeds with an extra audit event."
+  deny: "Violates a mandatory rule; must not execute."
+  require_approval: "Privileged; needs explicit human or policy-workflow authorization."
+
+# The agent never evaluates its own safety. Guardian evaluates independently.
+design_invariant: "guardian_evaluates_independently_of_agent"
+
+categories:
+  identity: "Identity and authentication"
+  access: "Access control and permissions"
+  injection: "Prompt injection and instruction security"
+  tools: "Tool and plugin security"
+  data: "Data protection and privacy"
+  memory: "Memory security"
+  behaviour: "Behaviour and autonomous execution"
+  network: "Network and communication security"
+  audit: "Audit and accountability"
+
+rules:
+  # 1. Identity and authentication
+  - id: AG-01
+    title: "Every agent must have a unique registered identity."
+    category: identity
+    module: session_registry
+    severity: high
+    enforcement: deny
+    condition: "agent_unregistered"
+    floor: true
+    priority: P2
+    cis_controls: [1, 5]
+    standards: [owasp_agentic, nist_ai_rmf]
+  - id: AG-02
+    title: "Agents must authenticate before accessing organizational resources."
+    category: identity
+    module: session_registry
+    severity: high
+    enforcement: deny
+    condition: "unauthenticated_resource_access"
+    floor: true
+    priority: P2
+    cis_controls: [5, 6]
+    standards: [owasp_agentic]
+  - id: AG-03
+    title: "Agents must not impersonate another user, agent, or service."
+    category: identity
+    module: session_registry
+    severity: critical
+    enforcement: deny
+    condition: "identity_mismatch_or_spoof"
+    floor: true
+    priority: P2
+    cis_controls: [5, 6]
+    standards: [mitre_atlas]
+  - id: AG-04
+    title: "Agent credentials must be scoped, protected, and revocable."
+    category: identity
+    module: session_registry
+    severity: high
+    enforcement: warn
+    side_effects: [credential_lifecycle]
+    floor: true
+    priority: P2
+    cis_controls: [5]
+    standards: [nist_ai_rmf]
+  - id: AG-05
+    title: "Every action must trace to an agent identity and initiating user/service."
+    category: identity
+    module: session_registry
+    severity: high
+    enforcement: allow
+    side_effects: [audit]
+    floor: true
+    priority: P2
+    cis_controls: [8]
+    standards: [nist_ai_rmf]
+
+  # 2. Access control and permissions
+  - id: AG-06
+    title: "Agents must follow least privilege."
+    category: access
+    module: guardian
+    severity: critical
+    enforcement: deny
+    condition: "privilege_exceeds_manifest"
+    floor: true
+    priority: P0
+    cis_controls: [6]
+    standards: [owasp_llm, cis_v8]
+  - id: AG-07
+    title: "Agents must access only files required for the task."
+    category: access
+    module: guardian
+    severity: critical
+    enforcement: deny
+    condition: "file_outside_allowlist"
+    floor: true
+    priority: P0
+    cis_controls: [3, 6]
+    standards: [cis_v8]
+  - id: AG-08
+    title: "No access to .env, private keys, passwords, or credentials without explicit authorization."
+    category: access
+    module: guardian
+    severity: critical
+    enforcement: deny
+    condition: "sensitive_file_access_unauthorized"
+    floor: true
+    priority: P0
+    cis_controls: [3]
+    standards: [owasp_llm, cis_v8]
+  - id: AG-09
+    title: "No access to databases or APIs outside assigned permissions."
+    category: access
+    module: guardian
+    severity: high
+    enforcement: deny
+    condition: "resource_outside_permission"
+    floor: true
+    priority: P2
+    cis_controls: [6]
+    standards: [cis_v8]
+  - id: AG-10
+    title: "No modify/delete/transfer of protected resources without authorization."
+    category: access
+    module: guardian
+    severity: critical
+    enforcement: require_approval
+    condition: "protected_resource_mutation"
+    floor: true
+    priority: P2
+    cis_controls: [3, 6]
+    standards: [cis_v8]
+
+  # 3. Prompt injection and instruction security
+  - id: AG-11
+    title: "Agents must distinguish trusted instructions from untrusted external content."
+    category: injection
+    module: injection_guard
+    severity: high
+    enforcement: allow
+    side_effects: [provenance_tag]
+    floor: true
+    priority: P0
+    cis_controls: [9, 16]
+    standards: [owasp_llm]
+  - id: AG-12
+    title: "Instructions in webpages/emails/documents must not override system/developer policy."
+    category: injection
+    module: injection_guard
+    severity: critical
+    enforcement: deny
+    condition: "external_instruction_overrides_policy"
+    floor: true
+    priority: P0
+    cis_controls: [16]
+    standards: [owasp_llm, owasp_agentic]
+  - id: AG-13
+    title: "No revealing system prompts, confidential instructions, or security config."
+    category: injection
+    module: injection_guard
+    severity: high
+    enforcement: deny
+    condition: "disclosure_of_system_context"
+    floor: true
+    priority: P2
+    cis_controls: [3]
+    standards: [owasp_llm]
+  - id: AG-14
+    title: "Suspicious external instructions must be reported to Injection Guard."
+    category: injection
+    module: injection_guard
+    severity: high
+    enforcement: warn
+    side_effects: [event]
+    floor: true
+    priority: P0
+    cis_controls: [17]
+    standards: [owasp_llm]
+  - id: AG-15
+    title: "Suspicious content must not authorize new tools, permissions, or destinations."
+    category: injection
+    module: guardian
+    severity: critical
+    enforcement: deny
+    condition: "tainted_session_privilege_grant"
+    floor: true
+    priority: P2
+    cis_controls: [16]
+    standards: [owasp_llm, owasp_agentic]
+
+  # 4. Tool and plugin security
+  - id: AG-16
+    title: "Agents may use only registered, authorized tools."
+    category: tools
+    module: tool_trust
+    severity: critical
+    enforcement: deny
+    condition: "tool_not_in_registry"
+    floor: true
+    priority: P0
+    cis_controls: [2]
+    standards: [owasp_agentic, cis_v8]
+  - id: AG-17
+    title: "No installing/activating unknown plugins or MCP servers."
+    category: tools
+    module: tool_trust
+    severity: critical
+    enforcement: deny
+    condition: "unknown_plugin_or_mcp"
+    floor: true
+    priority: P2
+    cis_controls: [2, 15]
+    standards: [owasp_agentic]
+  - id: AG-18
+    title: "Tool permissions must be validated before execution."
+    category: tools
+    module: guardian
+    severity: high
+    enforcement: deny
+    condition: "tool_permission_unvalidated"
+    floor: true
+    priority: P0
+    cis_controls: [6, 16]
+    standards: [owasp_agentic]
+  - id: AG-19
+    title: "No using tools outside the assigned task and capabilities."
+    category: tools
+    module: guardian
+    severity: high
+    enforcement: deny
+    condition: "tool_use_off_manifest"
+    floor: true
+    priority: P2
+    cis_controls: [6]
+    standards: [owasp_agentic]
+  - id: AG-20
+    title: "Changes to tool identity/version/permissions must be recorded and reassessed."
+    category: tools
+    module: tool_trust
+    severity: medium
+    enforcement: warn
+    side_effects: [reassess_trust]
+    floor: false
+    priority: P2
+    cis_controls: [2, 4]
+    standards: [cis_v8]
+
+  # 5. Data protection and privacy
+  - id: AG-21
+    title: "No transmitting confidential info to unauthorized AI providers."
+    category: data
+    module: sensitive_data_inspection
+    severity: critical
+    enforcement: deny
+    condition: "egress_to_unauthorized_provider"
+    floor: true
+    priority: P0
+    cis_controls: [3, 13]
+    standards: [owasp_llm, cis_v8]
+  - id: AG-22
+    title: "No exposing passwords, API keys, tokens, or private keys."
+    category: data
+    module: sensitive_data_inspection
+    severity: critical
+    enforcement: deny
+    condition: "secret_in_payload"
+    floor: true
+    priority: P0
+    cis_controls: [3]
+    standards: [owasp_llm, cis_v8]
+  - id: AG-23
+    title: "PII handled per organizational data policy."
+    category: data
+    module: sensitive_data_inspection
+    severity: high
+    enforcement: warn
+    side_effects: [redact]
+    floor: true
+    priority: P2
+    cis_controls: [3]
+    standards: [nist_ai_rmf]
+  - id: AG-24
+    title: "No storing sensitive info in unauthorized persistent memory."
+    category: data
+    module: memory_guard
+    severity: high
+    enforcement: deny
+    condition: "sensitive_write_to_unauthorized_memory"
+    floor: true
+    priority: P2
+    cis_controls: [3]
+    standards: [owasp_agentic]
+  - id: AG-25
+    title: "Data transfers need an authorized destination and legitimate task purpose."
+    category: data
+    module: sensitive_data_inspection
+    severity: high
+    enforcement: deny
+    condition: "transfer_without_authorized_purpose"
+    floor: true
+    priority: P2
+    cis_controls: [3, 13]
+    standards: [cis_v8]
+
+  # 6. Memory security
+  - id: AG-26
+    title: "Persistent memory must record the origin of stored information."
+    category: memory
+    module: memory_guard
+    severity: high
+    enforcement: allow
+    side_effects: [provenance]
+    floor: true
+    priority: P1
+    cis_controls: [8]
+    standards: [owasp_agentic]
+  - id: AG-27
+    title: "Untrusted instructions must not become trusted just by being stored."
+    category: memory
+    module: memory_guard
+    severity: critical
+    enforcement: deny
+    condition: "trust_elevation_via_storage"
+    floor: true
+    priority: P1
+    cis_controls: [16]
+    standards: [owasp_agentic]
+  - id: AG-28
+    title: "Unauthorized memory modifications must be detected and logged."
+    category: memory
+    module: memory_guard
+    severity: high
+    enforcement: warn
+    side_effects: [event]
+    floor: true
+    priority: P1
+    cis_controls: [8]
+    standards: [owasp_agentic]
+  - id: AG-29
+    title: "Retrieved memory must be checked against current permissions/policy."
+    category: memory
+    module: memory_guard
+    severity: high
+    enforcement: deny
+    condition: "stale_or_untrusted_memory_retrieval"
+    floor: true
+    priority: P1
+    cis_controls: [6]
+    standards: [owasp_agentic]
+  - id: AG-30
+    title: "Sensitive/obsolete memory follows retention and deletion policy."
+    category: memory
+    module: memory_guard
+    severity: medium
+    enforcement: allow
+    side_effects: [lifecycle]
+    floor: false
+    priority: P2
+    cis_controls: [3]
+    standards: [nist_ai_rmf]
+
+  # 7. Behaviour and autonomous execution
+  - id: AG-31
+    title: "Agents must operate within their objective and capability manifest."
+    category: behaviour
+    module: session_registry
+    severity: critical
+    enforcement: deny
+    condition: "action_off_manifest"
+    floor: true
+    priority: P0
+    cis_controls: [4, 6]
+    standards: [owasp_agentic]
+  - id: AG-32
+    title: "Destructive operations require explicit authorization."
+    category: behaviour
+    module: guardian
+    severity: critical
+    enforcement: require_approval
+    condition: "destructive_operation"
+    floor: true
+    priority: P0
+    cis_controls: [3]
+    standards: [owasp_agentic, cis_v8]
+  - id: AG-33
+    title: "No unauthorized shell commands or scripts."
+    category: behaviour
+    module: guardian
+    severity: critical
+    enforcement: deny
+    condition: "shell_command_not_allowlisted"
+    floor: true
+    priority: P0
+    cis_controls: [4, 10]
+    standards: [cis_v8]
+  - id: AG-34
+    title: "Unexpected behaviour changes must be recorded and assessed."
+    category: behaviour
+    module: behaviour_monitoring
+    severity: high
+    enforcement: warn
+    side_effects: [event]
+    floor: true
+    priority: P2
+    cis_controls: [13]
+    standards: [mitre_atlas]
+  - id: AG-35
+    title: "No continuing restricted operations after a Guardian denial."
+    category: behaviour
+    module: guardian
+    severity: critical
+    enforcement: deny
+    condition: "retry_after_denial"
+    side_effects: [audit]
+    floor: true
+    priority: P2
+    cis_controls: [17]
+    standards: [owasp_agentic]
+
+  # 8. Network and communication security
+  - id: AG-36
+    title: "Agents communicate only with authorized destinations."
+    category: network
+    module: network_intelligence
+    severity: critical
+    enforcement: deny
+    condition: "destination_not_allowlisted"
+    floor: true
+    priority: P1
+    cis_controls: [12, 13]
+    standards: [cis_v8]
+  - id: AG-37
+    title: "Agent-to-agent communication uses authenticated identities."
+    category: network
+    module: agent_trust
+    severity: high
+    enforcement: deny
+    condition: "unauthenticated_inter_agent_message"
+    floor: true
+    priority: P1
+    cis_controls: [6]
+    standards: [owasp_agentic]
+  - id: AG-38
+    title: "No transferring confidential info over unauthorized channels."
+    category: network
+    module: network_intelligence
+    severity: critical
+    enforcement: deny
+    condition: "confidential_over_unauthorized_channel"
+    floor: true
+    priority: P1
+    cis_controls: [3, 13]
+    standards: [cis_v8]
+  - id: AG-39
+    title: "External connections attributable to an agent/process where telemetry permits."
+    category: network
+    module: network_intelligence
+    severity: medium
+    enforcement: allow
+    side_effects: [correlate]
+    floor: false
+    priority: P1
+    cis_controls: [13]
+    standards: [cis_v8]
+  - id: AG-40
+    title: "Suspicious network behaviour generates a security event."
+    category: network
+    module: network_intelligence
+    severity: high
+    enforcement: warn
+    side_effects: [event]
+    floor: true
+    priority: P1
+    cis_controls: [13]
+    standards: [mitre_atlas]
+
+  # 9. Audit and accountability
+  - id: AG-41
+    title: "Every sensitive tool action generates an audit event."
+    category: audit
+    module: risk_correlation_engine
+    severity: high
+    enforcement: allow
+    side_effects: [audit]
+    floor: true
+    priority: P1
+    cis_controls: [8]
+    standards: [cis_v8]
+  - id: AG-42
+    title: "Policy decisions record the rule and policy version used."
+    category: audit
+    module: guardian
+    severity: high
+    enforcement: allow
+    side_effects: [audit]
+    floor: true
+    priority: P1
+    cis_controls: [8]
+    standards: [nist_ai_rmf]
+  - id: AG-43
+    title: "Security logs protected against unauthorized modification."
+    category: audit
+    module: risk_correlation_engine
+    severity: critical
+    enforcement: deny
+    condition: "log_tamper_attempt"
+    floor: true
+    priority: P1
+    cis_controls: [8]
+    standards: [cis_v8]
+  - id: AG-44
+    title: "Agents must not disable or bypass security monitoring."
+    category: audit
+    module: behaviour_monitoring
+    severity: critical
+    enforcement: deny
+    condition: "monitoring_bypass_attempt"
+    side_effects: [isolate]
+    floor: true
+    priority: P1
+    cis_controls: [8, 10]
+    standards: [mitre_atlas]
+  - id: AG-45
+    title: "Incidents preserve evidence and event relationships."
+    category: audit
+    module: risk_correlation_engine
+    severity: high
+    enforcement: allow
+    side_effects: [correlate]
+    floor: true
+    priority: P1
+    cis_controls: [8, 17]
+    standards: [nist_ai_rmf]
