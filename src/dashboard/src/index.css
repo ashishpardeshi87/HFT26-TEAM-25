@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-paper text-ink font-display;
+    background-image:
+      linear-gradient(#0a0a0a0d 1px, transparent 1px),
+      linear-gradient(90deg, #0a0a0a0d 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  ::selection { @apply bg-volt text-ink; }
+}
+
+@layer components {
+  .card {
+    @apply bg-panel border-[3px] border-ink shadow-brutal rounded-none;
+  }
+  .card-sm { @apply bg-panel border-[3px] border-ink shadow-brutal-sm; }
+  .btn {
+    @apply inline-flex items-center gap-2 border-[3px] border-ink bg-volt px-4 py-2
+           font-bold uppercase tracking-wide shadow-brutal-sm transition-all
+           hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-brutal
+           active:translate-x-[2px] active:translate-y-[2px] active:shadow-none;
+  }
+  .btn-acid { @apply btn bg-acid; }
+  .btn-cyan { @apply btn bg-cyan; }
+  .btn-ghost { @apply btn bg-panel; }
+  .chip {
+    @apply inline-flex items-center gap-1 border-2 border-ink px-2 py-0.5 text-xs font-bold uppercase;
+  }
+  .tag {
+    @apply inline-block border-2 border-ink bg-paper px-2 py-0.5 font-mono text-xs;
+  }
+  .label { @apply font-mono text-[11px] uppercase tracking-widest text-ink/60; }
+}
